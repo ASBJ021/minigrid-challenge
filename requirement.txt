@@ -1,0 +1,4 @@
+gymnasium
+openai
+minigrid
+pillow
