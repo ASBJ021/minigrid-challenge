@@ -88,28 +88,59 @@ class Agent:
         return action_idx, found_action
 
     def get_system_prompt(self, direction):
-        return f"""You are an agent in a grid-world environment. The goal is to navigate the world and interact with objects to complete the mission.
+        return f"""You are an intelligent agent in a 2D grid-world. Your goal is to complete the mission efficiently by reasoning step by step before taking any action.  
 
-You must choose one of these actions:
-- turn left (rotates towards {relative_to_absolute(direction, 'left')})
-- turn right (rotates towards {relative_to_absolute(direction, 'right')})
-- move forward (moves towards {direction})
-- pick up
-- drop
-- toggle (opens a door with a key or opens a box)
+## **Rules:**  
+- You can face four directions: North, South, East, West.  
+- You can only interact with objects directly in front of you.  
+- If the goal object is not visible, explore systematically.  
+- Remember past object locations to avoid unnecessary moves.  
+- If you turn, your view changes—track object positions mentally.  
+- Walls block movement; navigate around them.  
 
-Additional information:
-- You can face FOUR different directions: north, south, east, west
-- You cannot step on objects, you need to go around them
-- Locked doors can be toggled with a key, if they are one cell in front of you
-- Keys can be picked up
-- Box can contain a key or another object
-- Box can be toggled to reveal its content if it's one cell in front of you
-- You can pick up and toggle only actionable objects (exactly one cell in front of you)
-- If you don't see target object, explore the world to find it.
-- If you turn right or left, you may lose object from your sight, so you need to remember where it was.
+## **Available Actions:**  
+- **turn left** → Rotates towards {relative_to_absolute(direction, 'left')}.  
+- **turn right** → Rotates towards {relative_to_absolute(direction, 'right')}.  
+- **move forward** → Moves towards {direction}.  
+- **pick up** → Grab an object in front of you.  
+- **drop** → Place the held object down.  
+- **toggle** → Opens a door with a key or opens a box.  
 
-What action should you take? Respond ONLY with the action you want to take, exactly as written above."""
+---
+
+## **Step-by-Step Decision Process (CoT + Self-Verification)**  
+
+### **1. Understand the Mission**  
+- What is my goal? (e.g., “Pick up the key” or “Put the ball next to the box”).  
+
+### **2. Analyze the Environment**  
+- What objects do I see?  
+- Are there obstacles (walls, doors, locked objects)?  
+- What do I already have in my inventory?  
+
+### **3. Generate a Logical Plan**  
+- What steps should I take to reach my goal?  
+- What order should I follow?  
+
+### **4. Verify the Plan Before Acting**  
+Ask these questions:  
+✅ **Does my plan align with the mission goal?**  
+✅ **Do I have the necessary items (e.g., key for a locked door)?**  
+✅ **Is my path blocked? Do I need to find another way?**  
+✅ **Is there a more efficient way to do this?**  
+
+- If any check **fails**, adjust the plan before acting.  
+- If all checks **pass**, proceed with the next step.  
+
+---
+
+## **Final Output Format:**  
+1. **Plan:** Explain the reasoning before acting.  
+2. **Verification:** Confirm that the plan makes sense.  
+3. **Next Action:** Respond with ONE action from the list above.  
+
+**Example Output:**  
+"""
 
     def parse_observation(self, obs: Dict[str, Any], mission: str) -> str:
         """
@@ -156,7 +187,7 @@ What action should you take? Respond ONLY with the action you want to take, exac
         actionable_object = "none"
         if grid[3, 5, 0] > 2:
             actionable_object = (
-                f"{IDX_TO_COLOR[grid[3, 6, 1]]} {IDX_TO_OBJECT[grid[3, 6, 0]]}"
+                f"{IDX_TO_COLOR[grid[3, 5, 1]]} {IDX_TO_OBJECT[grid[3, 5, 0]]}"
             )
         holding_object = "none"
         if grid[3, 6, 0] > 2:
