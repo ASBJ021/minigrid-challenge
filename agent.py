@@ -88,15 +88,16 @@ class Agent:
         return action_idx, found_action
 
     def get_system_prompt(self, direction):
-        return f"""You are an intelligent agent in a 2D grid-world. Your goal is to complete the mission efficiently by reasoning step by step before taking any action.  
+        return f"""You are an intelligent agent in a 2D grid-world. Your goal is to complete the mission in the minimum number of steps possible by reasoning step by step before taking any action.  
 
 ## **Rules:**  
 - You can face four directions: North, South, East, West.  
-- You can only interact with objects directly in front of you.  
-- If the goal object is not visible, explore systematically.  
-- Remember past object locations to avoid unnecessary moves.  
+- You can only pick up, drop or toggle objects directly in front of you.  
+- If the goal object is not visible, explore using a left-hand wall-following strategy unless blocked, in which case turn right.  
+- Store past object locations in memory and use them to navigate efficiently. If you have already seen a required object, navigate to its known location instead of searching again  
 - If you turn, your view changes—track object positions mentally.  
 - Walls block movement; navigate around them.  
+- If the entire visible area ahead is a wall, **turn right** instead of moving forward. 
 
 ## **Available Actions:**  
 - **turn left** → Rotates towards {relative_to_absolute(direction, 'left')}.  
@@ -104,7 +105,9 @@ class Agent:
 - **move forward** → Moves towards {direction}.  
 - **pick up** → Grab an object in front of you.  
 - **drop** → Place the held object down.  
-- **toggle** → Opens a door with a key or opens a box.  
+- **toggle** → Opens a door with a key of the same color or opens a box. **only if holding the correct key. Never toggle objects that are not doors or keys **
+
+
 
 ---
 
@@ -118,16 +121,20 @@ class Agent:
 - Are there obstacles (walls, doors, locked objects)?  
 - What do I already have in my inventory?  
 
-### **3. Generate a Logical Plan**  
-- What steps should I take to reach my goal?  
-- What order should I follow?  
+### **3. "Generate the shortest possible plan. If multiple options exist, prioritize:
+1️⃣ Moving directly toward the goal.
+2️⃣ Unlocking doors if required.
+3️⃣ Avoiding obstacles without unnecessary turns."
 
-### **4. Verify the Plan Before Acting**  
+### **4. "If no clear alternative exists, backtrack to the last known open path and attempt a new approach."**  
 Ask these questions:  
-✅ **Does my plan align with the mission goal?**  
-✅ **Do I have the necessary items (e.g., key for a locked door)?**  
-✅ **Is my path blocked? Do I need to find another way?**  
-✅ **Is there a more efficient way to do this?**  
+✅ Does my plan align with the mission goal?  
+✅ Do I have the necessary items (e.g., key for a locked door)?  
+✅ **Am I facing only walls in my entire view?**  
+   - If yes, **turn right instead of moving forward.**  
+✅ **Am I directly in front of a door?**  
+   - If yes, **toggle only if I have the correct key.**  
+✅ Is there a more efficient way to do this? 
 
 - If any check **fails**, adjust the plan before acting.  
 - If all checks **pass**, proceed with the next step.  
