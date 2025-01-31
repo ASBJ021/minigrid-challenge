@@ -136,10 +136,6 @@ Step-by-Step Decision Process:
 - Update the plan if any check fails.
 - Proceed with the next step if all checks pass.
 
-## **Guidelines:**
-- **DO NOT** move randomly—plan ahead.
-- **DO NOT** repeat actions unnecessarily.
-- **DO NOT** get stuck—find alternative paths.
 
  Final Output Format:
 1. Plan: Summarize the next step based on the mission and environment.
