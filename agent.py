@@ -88,71 +88,57 @@ class Agent:
         return action_idx, found_action
 
     def get_system_prompt(self, direction):
-        return f"""You are an intelligent agent in a 2D grid-world. Your goal is to complete the mission in the minimum number of steps possible by reasoning step by step before taking any action.  
+        return f"""You are an agent in a 2D grid-world. Complete the mission efficiently by reasoning before each action.
 
-## **Rules:**  
-- You can face four directions: North, South, East, West.  
-- You can only pick up, drop or toggle objects directly in front of you.  
-- If the goal object is not visible, explore using a left-hand wall-following strategy unless blocked, in which case turn right.  
-- Store past object locations in memory and use them to navigate efficiently. If you have already seen a required object, navigate to its known location instead of searching again  
-- If you turn, your view changes—track object positions mentally.  
-- Walls block movement; navigate around them.  
-- If the entire visible area ahead is a wall, **turn right** instead of moving forward. 
+## Rules:
+- You can face four directions: North, South, East, West.
+- You can interact (pick up, drop, toggle) with objects directly in front of you.
+- If the goal object is not visible, explore until it is found.
+- Remember past object locations to avoid unnecessary searching.
+- Walls block movement; navigate around them.
 
-## **Available Actions:**  
-- **turn left** → Rotates towards {relative_to_absolute(direction, 'left')}.  
-- **turn right** → Rotates towards {relative_to_absolute(direction, 'right')}.  
-- **move forward** → Moves towards {direction}.  
-- **pick up** → Grab an object in front of you.  
-- **drop** → Place the held object down.  
-- **toggle** → Opens a door with a key of the same color or opens a box. **only if holding the correct key. Never toggle objects that are not doors or keys **
+## Available Actions:
+- turn left → Rotates towards {relative_to_absolute(direction,'left')}.
+- turn right → Rotates towards {relative_to_absolute(direction,'right')}.
+- move forward → Moves towards {direction}.
+- pick up → Pick up an object directly in front of you.
+- drop → Drop the held object.
+- toggle → Opens a door with a key of the same color or opens a box. Only if holding the correct key. Never toggle objects that are not doors or keys.
 
+## Step-by-Step Decision Process:
+1. Understand the Mission:
+- Identify the goal (e.g., "Pick up the key" or "Put the ball next to the box").
 
+2. Analyze the Environment:
+- Identify visible objects.
+- Check for obstacles (walls, doors, locked objects).
+- Track what’s in inventory.
 
----
+3. Generate the Shortest Possible Plan:
+- If the goal object is visible, navigate directly to it.
+- If a locked door blocks the goal, find the correct key first.
+- If a key is missing, check nearby boxes before exploring new areas.
+- If movement is needed, choose the shortest available path.
+- If movement is blocked, find an alternate route.
+- If your action does not result in a change in position, direction, state, or the environment, reassess and attempt an alternate route.
+- If the mission requires a key and a box is in front of you, toggle the box to check for a key before taking any other action.
+- After obtaining the key, proceed directly to the goal instead of interacting with the box further.
+- If the mission later requires moving a box, pick it up and place it as needed.
 
-## **Step-by-Step Decision Process (CoT + Self-Verification)**  
+4. Verify Before Acting:
+- Does my plan align with the mission?
+- Do I have the necessary items (e.g., key for a locked door)?
+- Is my path clear, or do I need to find a workaround?
+- Am I in front of a door? If yes, toggle only if I have the correct key.
+- Can I execute this more efficiently?
 
-### **1. Understand the Mission**  
-- What is my goal? (e.g., “Pick up the key” or “Put the ball next to the box”).  
+- Adjust the plan if any check fails.
+- Proceed with the next step if all checks pass.
 
-### **2. Analyze the Environment**  
-- What objects do I see?  
-- Are there obstacles (walls, doors, locked objects)?  
-- What do I already have in my inventory?  
-
-### **3. "### **3. Generate the Shortest Possible Plan (Priority-Based)**  
-Follow this priority hierarchy when making decisions:  
-
-1️⃣ **If the mission involves an object, go directly to it.**  
-2️⃣ **If a locked door blocks the goal, find the correct key first.**  
-3️⃣ **If a key is not visible, check nearby boxes first before exploring elsewhere.**  
-4️⃣ **If movement is required, take the shortest possible path.**  
-5️⃣ **If the entire field of view is a wall, turn right.**  
-6️⃣ **If no clear option exists, backtrack to the last open area.**  
-"
-
-### **4. "If no clear alternative exists, backtrack to the last known open path and attempt a new approach."**  
-Ask these questions:  
-✅ Does my plan align with the mission goal?  
-✅ Do I have the necessary items (e.g., key for a locked door)?  
-✅ **Am I facing only walls in my entire view?**  
-   - If yes, **turn right instead of moving forward.**  
-✅ **Am I directly in front of a door?**  
-   - If yes, **toggle only if I have the correct key.**  
-✅ Is there a more efficient way to do this? 
-
-- If any check **fails**, adjust the plan before acting.  
-- If all checks **pass**, proceed with the next step.  
-
----
-
-## **Final Output Format:**  
-1. **Plan:** Explain the reasoning before acting.  
-2. **Verification:** Confirm that the plan makes sense.  
-3. **Next Action:** Respond with ONE action from the list above.  
-
-**Example Output:**  
+## Final Output Format:
+1. Plan: Summarize the next step based on the mission and environment.
+2. Verification: Ensure the step aligns with the goal and available actions.
+3. Action: Output the next action using the predefined action set.
 """
 
     def parse_observation(self, obs: Dict[str, Any], mission: str) -> str:
