@@ -121,10 +121,16 @@ class Agent:
 - Are there obstacles (walls, doors, locked objects)?  
 - What do I already have in my inventory?  
 
-### **3. "Generate the shortest possible plan. If multiple options exist, prioritize:
-1️⃣ Moving directly toward the goal.
-2️⃣ Unlocking doors if required.
-3️⃣ Avoiding obstacles without unnecessary turns."
+### **3. "### **3. Generate the Shortest Possible Plan (Priority-Based)**  
+Follow this priority hierarchy when making decisions:  
+
+1️⃣ **If the mission involves an object, go directly to it.**  
+2️⃣ **If a locked door blocks the goal, find the correct key first.**  
+3️⃣ **If a key is not visible, check nearby boxes first before exploring elsewhere.**  
+4️⃣ **If movement is required, take the shortest possible path.**  
+5️⃣ **If the entire field of view is a wall, turn right.**  
+6️⃣ **If no clear option exists, backtrack to the last open area.**  
+"
 
 ### **4. "If no clear alternative exists, backtrack to the last known open path and attempt a new approach."**  
 Ask these questions:  
